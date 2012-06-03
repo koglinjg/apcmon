@@ -1,0 +1,9 @@
+# usage: check_apc [-H hostname] [-P path] [-C check] [-s] [-p int] -w int -c int [-d]
+# -s is ssl, this also changes the default port to 433, however you can still specify a different port
+# -d is debug, you should never use it in your command definition
+# If you installed the apc_mon server folder to a path other than /apc_mon/ you must specify -P with the custom path
+# 'check_apc' command definition
+define command{
+        command_name    check_apc
+        command_line    $USER1$/check_apc -H $HOSTADDRESS$ -C $ARG1$ -w $ARG2$ -c $ARG3$
+        }

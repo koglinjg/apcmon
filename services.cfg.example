@@ -1,0 +1,22 @@
+#based on the command.cfg.example that defines the check_apc command and its arguments
+#This one uses 3 ARGS: what to check, warning, critical
+define service{
+        use                             service
+        host_name                       server1,server2,server3
+        service_description             APC Expunge Count
+        check_command                   check_apc!expunges!1!10
+        }
+
+define service{
+        use                             service
+        host_name                       server1,server2,server3
+        service_description             APC Hit%
+        check_command                   check_apc!hit_percent!80!40 #Note that the warning is greater that the critical. When this is the case the check script automatically knows to reverse its assumption that low is good and high is bad
+        }
+
+define service{
+        use                             service
+        host_name                       server1,server2,server3
+        service_description             APC Fragments
+        check_command                   check_apc!fragments!1!10
+        }

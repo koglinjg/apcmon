@@ -1,0 +1,169 @@
+#!/usr/bin/php -q
+<?php
+//TODO include server and client versions and report them to the user on errors
+//TODO add more debug code
+//TODO verify file_get_contents follows 302's and other redirects
+//TODO use config array instead of variables
+//TODO add a verbosity level to debugs instead of just all or none.
+
+$options = getopt("H:P:C:s::p:w:c:d::");
+
+#Defaults
+$host = '127.0.0.1';
+$check = 'expunges';
+$ssl = 0;
+$path = '/apc_mon/';
+$port = 80;
+$warning = -1;
+$critical = -1;
+$debug = 0;
+#return code : 0=OK, 1=WARN, 2=CRIT, 3=UNKNOWN
+$return_code = 3;
+$version = '0.3';
+$output = 'UNKNOWN';
+if (count($argv) === 1 || $argv[1] == "help" || $argv[1] == "--help" || $argv[1] == "-h") {
+  print("usage: check_apc [-H hostname] [-P path] [-C check] [-s] [-p int] -w int -c int [-d]\n");
+  print(" -H (hostname): used to build a URI with the other options. default 127.0.0.1\n");
+  print(" -P (path): used to build a URI with the other options. default /apc_mon/\n");
+  print(" -C (check): any defined plugin. Anything invalid will return a list of valid keys. default expunges\n");
+  print(" -s (ssl): enables SSL. It will automatically change the port to 443 however if one is specified that one will be used instead. default disabled\n");
+  print(" -p (port): the port to use, default 80\n");
+  print(" -w (warning): low level of cache use that will raise a warning. default 30\n");
+  print(" -c (critical): low level of cache use that will raise a critical. default 10\n");
+  print(" -d: enables debug output\n");
+  print("\n");
+  exit(3);
+}
+
+if (isset($options["H"]) && !is_null($options["H"])) {
+  $host = $options["H"];
+}
+if (isset($options["C"]) && !is_null($options["C"])) {
+  $check = $options["C"];
+}
+if (isset($options["P"]) && !is_null($options["P"])) {
+  $path = $options["P"];
+}
+if (isset($options["s"])) {
+  $ssl = 1;
+  $port = 443;
+}
+if (isset($options["p"]) && !is_null($options["p"])) {
+  $port = $options["p"];
+}
+if (isset($options["w"]) && !is_null($options["w"])) {
+  $warning = $options["w"];
+}
+if (isset($options["c"]) && !is_null($options["c"])) {
+  $critical = $options["c"];
+}
+if (isset($options["d"])) {
+  $debug = 1;
+}
+
+if ($debug) {
+  ini_set('display_errors', 1);
+  error_reporting(E_ALL);
+} else {
+  ini_set('display_errors', 0);
+}
+
+if ($warning == '-1' || $critical == '-1') {
+  print "Error: warning and critical must be set.\n";
+  exit(3);
+}
+//determine appropriate comparison operator
+if ($critical > $warning) {
+  $op = '>';
+} else if ($critical < $warning) {
+  $op = '<';
+} else {
+  print "Error: warning and critical being set to the same value is not currently supported.\n";
+  exit(3);
+}
+
+//query apc_mon server side for requested variable
+$protocol = $ssl ? 'https://' : 'http://';
+$uri = $protocol . $host . ':' . $port . $path . '?check=' . $check;
+if ($debug) {
+  print "Connecting to: $uri\n";
+}
+$results = file_get_contents($uri);
+//make sure we got something back
+if ($results) {
+  $result = unserialize($results);
+  //if its an error, let the user know and exit
+  if ($result['error']) {
+    print "${result['error_message']}\n";
+    exit(3);
+  } else {
+    if ($debug) {
+      print_r($result);
+      print "\n";
+    }
+
+    $count = count($result['data']);
+    if ($debug) {
+      print "Count: $count\n";
+    }
+    if ($count === 1) {
+      $data = array_shift($result['data']);
+    } else {
+      die("Multiple aggregated request are not implemented yet. Give me a use case and let me know you want them.\n");
+    }
+
+    if ($debug) {
+      print "Data:\n";
+      print_r($data);
+      print "\n";
+    }
+
+    //prefix output
+    //todo let plugins implement this?
+    $output = "$check ";
+
+    //TODO don't build output incrementally, use separate variables and concatenate at the end
+    //TODO figure out output status by return code value instead of setting it here.
+    if ($op == '>') {
+      if ($data >= $critical) {
+        $output .= "CRITICAL -";
+        $return_code = 2;
+      } else if ($data >= $warning) {
+        $output .= "WARN -";
+        $return_code = 1;
+      } else if ($data < $warning) {
+        $output .= "OK -";
+        $return_code = 1;
+      }
+    } else if ($op == '<') {
+      if ($data <= $critical) {
+        $output .= "CRITICAL -";
+        $return_code = 2;
+      } else if ($data <= $warning) {
+        $output .= "WARN -";
+        $return_code = 1;
+      } else if ($data > $warning) {
+        $output .= "OK -";
+        $return_code = 1;
+      }
+    }
+    //in all cases add result data to the output
+    //TODO make it so each plugin on the server can specify a name to use
+    //deprecated will change soon
+    switch ($check) {
+      case 'hit_percent':
+        $output .= " HITS ${data}%";
+        break;
+      default:
+        $output .= " $check=$data\n";
+        break;
+    }
+
+  }
+} else {
+  //if there was no response from the remote server
+  print $debug ? "$uri did not send back a response\n" : "No Response";
+  exit(3);
+}
+print "$output\n";
+exit($return_code);
