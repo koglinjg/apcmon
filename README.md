@@ -28,6 +28,32 @@ Installation:
 6. Look at the services.cfg.example and add something similar to your nagios configuration (/etc/nagios/)
 7. Reload nagios and check your apc stats
 
+Included Plugins:
+====
+
+expunges
+==
+Returns the amount of times apc cache has been flushed.
+Example service command: check_apc!expunges!1!10
+Example result: "expunges OK - expunges=0"
+
+fragments
+==
+Returns the number of excess fragments. There is 1 chunk per segment that is not counted as a fragment but all others past the first are.
+Example service command: check_apc!fragments!1!10
+Example result: "fragments OK - fragments=0"
+
+hit_percent
+==
+Returns the percentage of cache hits.
+Example service command: check_apc!hit_percent!80!60
+Example result: "hit_percent OK - HITS 99%"
+
+list_valid_checks
+==
+Internal plugin that lists all other valid plugins
+
+
 Make your own plugins:
 =====
 WARNING: this is still alpha code, don't write a plugin if you care about the api changing in the next few days.
