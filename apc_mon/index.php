@@ -1,7 +1,8 @@
 <?php
 /**
- * User: koglinjg
- * Date: 6/2/12
+ * Copyright: 2012 Joel Koglin
+ * apcmon is distributed under the terms of the GPLv3
+ * This file is part of apcmon
  */
 //@Version 0.3
 

@@ -1,5 +1,10 @@
 #!/usr/bin/php -q
 <?php
+/**
+ * Copyright: 2012 Joel Koglin
+ * apcmon is distributed under the terms of the GPLv3
+ * This file is part of apcmon
+ */
 //TODO include server and client versions and report them to the user on errors
 //TODO add more debug code
 //TODO verify file_get_contents follows 302's and other redirects

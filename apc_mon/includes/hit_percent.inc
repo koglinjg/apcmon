@@ -1,8 +1,8 @@
 <?php
 /**
- * User: koglinjg
- * Date: 6/2/12
- * Time: 4:08 PM
+ * Copyright: 2012 Joel Koglin
+ * apcmon is distributed under the terms of the GPLv3
+ * This file is part of apcmon
  */
 
 /**
