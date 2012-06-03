@@ -138,7 +138,7 @@ if ($results) {
         $return_code = 1;
       } else if ($data < $warning) {
         $output .= "OK -";
-        $return_code = 1;
+        $return_code = 0;
       }
     } else if ($op == '<') {
       if ($data <= $critical) {
@@ -149,7 +149,7 @@ if ($results) {
         $return_code = 1;
       } else if ($data > $warning) {
         $output .= "OK -";
-        $return_code = 1;
+        $return_code = 0;
       }
     }
     //in all cases add result data to the output
